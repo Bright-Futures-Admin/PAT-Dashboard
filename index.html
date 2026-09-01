@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parents as Teachers — Program Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+
+  /* ============================================================
+     DATA — update this block each year with Claude's help, then
+     re-upload this file to GitHub. Nothing else needs to change.
+     ============================================================ */
+
+  :root{
+    --ink:#221f1b;
+    --ink-soft:#5b5750;
+    --pine:#1e332b;
+    --pine-soft:#3d5449;
+    --sage:#7c9384;
+    --gold:#c99a3e;
+    --gold-soft:#e7cf9c;
+    --rust:#a94b32;
+    --rust-soft:#f1ded6;
+    --paper:#f4f0e5;
+    --paper-raised:#fbf9f2;
+    --line:#ded6c4;
+    --radius:2px;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:16px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+  }
+
+  a{color:var(--pine);}
+  :focus-visible{outline:2px solid var(--gold); outline-offset:2px;}
+
+  h1,h2,h3{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    margin:0;
+    color:var(--ink);
+  }
+
+  .wrap{max-width:1120px; margin:0 auto; padding:0 28px;}
+
+  /* ---------- Masthead ---------- */
+  header.masthead{
+    background:var(--pine);
+    color:#f4f0e5;
+    padding:44px 0 36px;
+    border-bottom:6px solid var(--gold);
+  }
+  header.masthead .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    letter-spacing:0.02em;
+    color:var(--gold-soft);
+    margin-bottom:10px;
+  }
+  header.masthead h1{
+    color:#fff;
+    font-size:clamp(32px, 4.5vw, 48px);
+    line-height:1.05;
+    max-width:16ch;
+  }
+  header.masthead p.sub{
+    margin-top:14px;
+    max-width:56ch;
+    font-size:17px;
+    color:#d9d3c1;
+  }
+  header.masthead .meta{
+    margin-top:22px;
+    font-size:13px;
+    color:#a9b6ac;
+    font-family:'IBM Plex Mono', monospace;
+  }
+
+  /* ---------- At-a-glance strip ---------- */
+  section.glance{
+    background:var(--paper-raised);
+    border-bottom:1px solid var(--line);
+    padding:26px 0;
+  }
+  .glance-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:0;
+  }
+  .glance-item{
+    flex:1 1 200px;
+    padding:6px 26px;
+    border-left:1px solid var(--line);
+  }
+  .glance-item:first-child{border-left:none; padding-left:0;}
+  .glance-item .num{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:38px;
+    line-height:1;
+    color:var(--pine);
+  }
+  .glance-item .num .delta{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:14px;
+    font-weight:500;
+    margin-left:6px;
+  }
+  .delta.up{color:#4f7a5c;}
+  .delta.down{color:var(--rust);}
+  .glance-item .label{
+    font-size:13px;
+    color:var(--ink-soft);
+    margin-top:4px;
+  }
+
+  /* ---------- Alert banner ---------- */
+  .alert{
+    margin:40px 0;
+    padding:22px 26px;
+    background:var(--rust-soft);
+    border-left:4px solid var(--rust);
+    border-radius:var(--radius);
+  }
+  .alert .alert-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    letter-spacing:0.03em;
+    color:var(--rust);
+    margin-bottom:8px;
+  }
+  .alert h3{font-size:20px; margin-bottom:8px;}
+  .alert p{margin:0; color:var(--ink); max-width:72ch;}
+
+  /* ---------- Sections ---------- */
+  main{padding:52px 0 90px;}
+  section.block{margin-bottom:64px;}
+  section.block h2{
+    font-size:26px;
+    margin-bottom:6px;
+  }
+  section.block .section-note{
+    color:var(--ink-soft);
+    font-size:15px;
+    max-width:64ch;
+    margin-bottom:24px;
+  }
+
+  .chart-panel{
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:24px;
+  }
+  .chart-panel canvas{max-height:320px;}
+
+  .two-col{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:24px;
+  }
+  @media (max-width: 780px){
+    .two-col{grid-template-columns:1fr;}
+    .glance-item{border-left:none; padding-left:0; border-top:1px solid var(--line); padding-top:16px;}
+    .glance-item:first-child{border-top:none; padding-top:6px;}
+  }
+
+  /* ---------- Table ---------- */
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:14.5px;
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+  }
+  th,td{
+    text-align:left;
+    padding:11px 14px;
+    border-bottom:1px solid var(--line);
+  }
+  thead th{
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:500;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    background:var(--paper);
+  }
+  tbody tr:last-child td{border-bottom:none;}
+  td.num, th.num{text-align:right; font-variant-numeric:tabular-nums;}
+  td.metric{color:var(--ink-soft);}
+
+  footer{
+    border-top:1px solid var(--line);
+    padding:26px 0 50px;
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">INTERNAL — STAFF &amp; LEADERSHIP</div>
+    <h1>Parents as Teachers<br>Program Dashboard</h1>
+    <p class="sub">Four years of Affiliate Performance Report data, tracked in one place so we can see what's working and where to look closer.</p>
+    <div class="meta">Program Code CO-0067 · Years covered 2022–23 through 2025–26 · Last updated <span id="lastUpdated"></span></div>
+  </div>
+</header>
+
+<section class="glance">
+  <div class="wrap glance-row" id="glanceRow"></div>
+</section>
+
+<main class="wrap">
+
+  <div class="alert">
+    <div class="alert-label">WORTH A CONVERSATION</div>
+    <h3>Visits per family fell sharply in 2025–26</h3>
+    <p>Families served grew from 27 to 34, and staffing grew from 3 to 5 part-time parent educators — but total personal visits dropped from 368 to 144. Average visits per family fell from roughly 13–14 to about 4. Worth checking whether this reflects a real service gap, a change in caseload timing, or a reporting/export issue.</p>
+  </div>
+
+  <section class="block">
+    <h2>Families &amp; children served</h2>
+    <p class="section-note">Both dropped sharply after 2022–23 and have been climbing back since — 2025–26 is nearly back to the original level.</p>
+    <div class="chart-panel">
+      <canvas id="chartFamilies"></canvas>
+    </div>
+  </section>
+
+  <section class="block">
+    <h2>Service volume</h2>
+    <p class="section-note">Total personal visits, and visits per family served — the second view is what shows the 2025–26 dip most clearly.</p>
+    <div class="two-col">
+      <div class="chart-panel">
+        <canvas id="chartVisits"></canvas>
+      </div>
+      <div class="chart-panel">
+        <canvas id="chartVisitsPerFamily"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <h2>Staffing</h2>
+    <p class="section-note">All parent educator roles have been part-time across all four years — no full-time PEs in any year reported.</p>
+    <div class="chart-panel">
+      <canvas id="chartStaffing"></canvas>
+    </div>
+  </section>
+
+  <section class="block">
+    <h2>Full year-by-year detail</h2>
+    <p class="section-note">Everything pulled from the four APRs. Blank cells mean the metric wasn't reported that year.</p>
+    <table id="detailTable">
+      <thead>
+        <tr>
+          <th>Metric</th>
+          <th class="num">2022–23</th>
+          <th class="num">2023–24</th>
+          <th class="num">2024–25</th>
+          <th class="num">2025–26</th>
+        </tr>
+      </thead>
+      <tbody id="detailBody"></tbody>
+    </table>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Source: PAT Affiliate Performance Reports (APR), submitted to Parents as Teachers National Center. Built for internal program review — not for external distribution.
+  </div>
+</footer>
+
+<script>
+/* ============================================================
+   DATA — this is the only block to touch when adding a new year.
+   Add a new entry to each array (or edit an existing one), keeping
+   the four arrays in the same year order. Use null for anything
+   not reported that year — it will render as a blank cell / gap.
+   ============================================================ */
+
+const DATA = {
+  years: ["2022–23", "2023–24", "2024–25", "2025–26"],
+  lastUpdated: "September 2026",
+
+  familiesServed:      [39, 25, 27, 34],
+  childrenServed:      [49, 33, 34, 45],
+  totalVisits:         [373, 336, 368, 144],
+
+  staffPartTime:       [4, 3, 3, 5],
+  staffFullTime:       [0, 0, 0, 0],
+
+  immunizationPct:     [50.0, null, 83.3, 75.0],
+  goalsDocumented:     [null, 25, 27, 34],
+  goalsMet:            [null, 11, 8, null],
+  familiesExited:      [null, null, 8, null],
+};
+
+// ---- derived ----
+const visitsPerFamily = DATA.totalVisits.map((v, i) => +(v / DATA.familiesServed[i]).toFixed(1));
+const totalStaff = DATA.staffPartTime.map((pt, i) => pt + DATA.staffFullTime[i]);
+const lastIdx = DATA.years.length - 1;
+const prevIdx = lastIdx - 1;
+
+document.getElementById('lastUpdated').textContent = DATA.lastUpdated;
+
+// ---- palette pulled from CSS ----
+const css = getComputedStyle(document.documentElement);
+const COL = {
+  pine: css.getPropertyValue('--pine').trim(),
+  pineSoft: css.getPropertyValue('--pine-soft').trim(),
+  gold: css.getPropertyValue('--gold').trim(),
+  sage: css.getPropertyValue('--sage').trim(),
+  rust: css.getPropertyValue('--rust').trim(),
+  ink: css.getPropertyValue('--ink').trim(),
+  line: css.getPropertyValue('--line').trim(),
+};
+
+Chart.defaults.font.family = "'IBM Plex Sans', sans-serif";
+Chart.defaults.color = COL.ink;
+Chart.defaults.borderColor = COL.line;
+
+function pct(curr, prev){
+  if (prev === null || prev === undefined || prev === 0) return null;
+  return ((curr - prev) / prev) * 100;
+}
+
+function deltaSpan(curr, prev, invert){
+  const p = pct(curr, prev);
+  if (p === null) return '';
+  const dir = p >= 0 ? 'up' : 'down';
+  const visualDir = invert ? (dir === 'up' ? 'down' : 'up') : dir; // for metrics where "down" is good, unused here
+  const arrow = p >= 0 ? '↑' : '↓';
+  return `<span class="delta ${dir}">${arrow} ${Math.abs(p).toFixed(0)}%</span>`;
+}
+
+// ---- at-a-glance strip ----
+const glanceItems = [
+  { label: 'Families served, 2025–26', value: DATA.familiesServed[lastIdx], delta: deltaSpan(DATA.familiesServed[lastIdx], DATA.familiesServed[prevIdx]) },
+  { label: 'Children served, 2025–26', value: DATA.childrenServed[lastIdx], delta: deltaSpan(DATA.childrenServed[lastIdx], DATA.childrenServed[prevIdx]) },
+  { label: 'Total visits, 2025–26', value: DATA.totalVisits[lastIdx], delta: deltaSpan(DATA.totalVisits[lastIdx], DATA.totalVisits[prevIdx]) },
+  { label: 'Avg. visits per family', value: visitsPerFamily[lastIdx], delta: deltaSpan(visitsPerFamily[lastIdx], visitsPerFamily[prevIdx]) },
+];
+
+document.getElementById('glanceRow').innerHTML = glanceItems.map(item => `
+  <div class="glance-item">
+    <div class="num">${item.value}${item.delta}</div>
+    <div class="label">${item.label}</div>
+  </div>
+`).join('');
+
+// ---- detail table ----
+const rows = [
+  { label: 'Families served', data: DATA.familiesServed },
+  { label: 'Children served', data: DATA.childrenServed },
+  { label: 'Total personal visits', data: DATA.totalVisits },
+  { label: 'Avg. visits per family', data: visitsPerFamily },
+  { label: 'Part-time parent educators (EOY)', data: DATA.staffPartTime },
+  { label: 'Full-time parent educators (EOY)', data: DATA.staffFullTime },
+  { label: 'Child immunization rate (%)', data: DATA.immunizationPct },
+  { label: 'Families with a goal documented', data: DATA.goalsDocumented },
+  { label: 'Families that met a goal', data: DATA.goalsMet },
+  { label: 'Families exited', data: DATA.familiesExited },
+];
+
+document.getElementById('detailBody').innerHTML = rows.map(row => `
+  <tr>
+    <td class="metric">${row.label}</td>
+    ${row.data.map(v => `<td class="num">${v === null || v === undefined ? '—' : v}</td>`).join('')}
+  </tr>
+`).join('');
+
+// ---- charts ----
+new Chart(document.getElementById('chartFamilies'), {
+  type: 'line',
+  data: {
+    labels: DATA.years,
+    datasets: [
+      { label: 'Families served', data: DATA.familiesServed, borderColor: COL.pine, backgroundColor: COL.pine, tension: 0.25, borderWidth: 2.5, pointRadius: 4 },
+      { label: 'Children served', data: DATA.childrenServed, borderColor: COL.gold, backgroundColor: COL.gold, tension: 0.25, borderWidth: 2.5, pointRadius: 4 },
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { position: 'top', align: 'start', labels: { boxWidth: 12, usePointStyle: true } } },
+    scales: { y: { beginAtZero: true, grid: { color: COL.line } }, x: { grid: { display: false } } }
+  }
+});
+
+new Chart(document.getElementById('chartVisits'), {
+  type: 'bar',
+  data: {
+    labels: DATA.years,
+    datasets: [{ label: 'Total personal visits', data: DATA.totalVisits, backgroundColor: COL.pineSoft, borderRadius: 2 }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false }, title: { display: true, text: 'Total personal visits', align: 'start', font: { family: "'Fraunces', serif", size: 15, weight: '600' }, color: COL.ink, padding: { bottom: 12 } } },
+    scales: { y: { beginAtZero: true, grid: { color: COL.line } }, x: { grid: { display: false } } }
+  }
+});
+
+new Chart(document.getElementById('chartVisitsPerFamily'), {
+  type: 'bar',
+  data: {
+    labels: DATA.years,
+    datasets: [{
+      label: 'Avg. visits per family',
+      data: visitsPerFamily,
+      backgroundColor: DATA.years.map((_, i) => i === lastIdx ? COL.rust : COL.sage),
+      borderRadius: 2
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false }, title: { display: true, text: 'Avg. visits per family', align: 'start', font: { family: "'Fraunces', serif", size: 15, weight: '600' }, color: COL.ink, padding: { bottom: 12 } } },
+    scales: { y: { beginAtZero: true, grid: { color: COL.line } }, x: { grid: { display: false } } }
+  }
+});
+
+new Chart(document.getElementById('chartStaffing'), {
+  type: 'bar',
+  data: {
+    labels: DATA.years,
+    datasets: [
+      { label: 'Part-time PEs', data: DATA.staffPartTime, backgroundColor: COL.gold, stack: 's', borderRadius: 2 },
+      { label: 'Full-time PEs', data: DATA.staffFullTime, backgroundColor: COL.pine, stack: 's', borderRadius: 2 },
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { position: 'top', align: 'start', labels: { boxWidth: 12, usePointStyle: true } } },
+    scales: { y: { stacked: true, beginAtZero: true, grid: { color: COL.line }, suggestedMax: Math.max(...totalStaff) + 1 }, x: { grid: { display: false }, stacked: true } }
+  }
+});
+</script>
+
+</body>
+</html>
